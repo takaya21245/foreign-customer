@@ -15,7 +15,7 @@ button{padding:14px 12px;border:0;border-radius:13px;background:#fff;box-shadow:
 .primary{background:#222;color:#fff}.edit{background:#e9e9e9}.delete{background:#fff0f0;color:#b00020}.move{width:105px;background:#eee;font-size:14px}.stop{width:82px;min-width:82px;background:#ffe9e9;color:#a00000;display:none;white-space:nowrap}.stop.show{display:block}.stop.show{display:block}
 .grid{display:grid;grid-template-columns:repeat(var(--cols,1),minmax(0,1fr));gap:8px}.grid .insert-slot{grid-column:1/-1}.grid .card{min-width:0}.card{display:flex;gap:6px}.card .speak{flex:1;text-align:left}
 .insert-slot{display:none;border:2px dashed #aaa;border-radius:12px;padding:8px;background:#fafafa}.insert-slot.show{display:block}.insert-slot button{width:100%;box-shadow:none}
-.move-active{outline:3px solid #888}.free{display:flex;gap:8px;margin-top:18px}.free input{flex:1;padding:14px;border:1px solid #bbb;border-radius:12px}
+.move-active{outline:3px solid #888}.free{display:flex;gap:8px;margin-top:18px;align-items:stretch}.free button{white-space:nowrap}.free input{flex:1;padding:14px;border:1px solid #bbb;border-radius:12px}
 .status{min-height:24px;margin-top:12px;font-size:14px}.dialog{position:fixed;inset:0;background:#0007;display:none;align-items:center;justify-content:center;padding:20px;z-index:20}.dialog.show{display:flex}
 .panel{width:min(560px,100%);background:#fff;border-radius:18px;padding:20px;box-shadow:0 10px 40px #0005}.panel h2{margin-top:0}.panel input{width:100%;padding:14px;margin:8px 0 14px;border:1px solid #bbb;border-radius:12px}
 .actions{display:flex;gap:8px}.actions button{flex:1}.manage-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}.manage-item{display:flex;gap:8px;align-items:center}.manage-item span{flex:1;padding:13px;border:1px solid #ddd;border-radius:10px;background:#fafafa}.manage-item button{padding:11px 9px;white-space:nowrap}
@@ -64,6 +64,62 @@ button{padding:14px 12px;border:0;border-radius:13px;background:#fff;box-shadow:
 }
 .settings-header h2{margin:0;flex:1}
 .settings-header button{white-space:nowrap}
+
+#phraseEditDialog .panel{max-width:620px}
+#phraseEditInput{width:100%;font-size:18px}
+#phraseEditPreview{
+  background:#f7f7f7;
+  border:1px solid #ddd;
+  border-radius:12px;
+  padding:12px;
+}
+
+
+
+
+
+
+
+
+.customer-speech-panel{
+  background:#fff;
+  border-radius:14px;
+  padding:14px 16px;
+  margin-bottom:14px;
+  box-shadow:0 2px 8px #0001;
+  border:1px solid #ddd;
+}
+.customer-speech-title{
+  font-size:13px;
+  font-weight:700;
+  color:#666;
+  margin-bottom:6px;
+}
+.customer-speech-japanese{
+  font-size:24px;
+  font-weight:800;
+  line-height:1.45;
+  min-height:35px;
+}
+.customer-speech-original{
+  margin-top:8px;
+  font-size:13px;
+  color:#666;
+  line-height:1.4;
+}
+.customer-listen-wrap{
+  margin:10px 0 16px;
+}
+.customer-listen-wrap button{
+  width:100%;
+  min-height:52px;
+  display:block;
+  white-space:nowrap;
+}
+.customer-listen-wrap button.listening{
+  outline:3px solid #999;
+}
+
 </style>
 </head>
 <body>
@@ -75,6 +131,14 @@ button{padding:14px 12px;border:0;border-radius:13px;background:#fff;box-shadow:
 </div>
 <div id="staffView">
 <div class="wrap">
+  <div id="customerSpeechPanel" class="customer-speech-panel">
+    <div class="customer-speech-title">お客さまの発言</div>
+    <div id="customerSpeechJapanese" class="customer-speech-japanese">ここに日本語訳が表示されます。</div>
+    <div id="customerSpeechOriginal" class="customer-speech-original"></div>
+  </div>
+</div>
+
+<div class="wrap">
 <h1>🌏 外国語接客ボード</h1>
 
 <label for="position">ポジションを選択</label>
@@ -85,15 +149,19 @@ button{padding:14px 12px;border:0;border-radius:13px;background:#fff;box-shadow:
 
 <label for="lang">言語を選択</label>
 <select id="lang"><option value="en">英語</option><option value="af">アフリカーンス語</option><option value="sq">アルバニア語</option><option value="am">アムハラ語</option><option value="ar">アラビア語</option><option value="hy">アルメニア語</option><option value="az">アゼルバイジャン語</option><option value="eu">バスク語</option><option value="bn">ベンガル語</option><option value="bg">ブルガリア語</option><option value="ca">カタルーニャ語</option><option value="zh-CN">中国語（簡体）</option><option value="zh-TW">中国語（繁体）</option><option value="hr">クロアチア語</option><option value="cs">チェコ語</option><option value="da">デンマーク語</option><option value="nl">オランダ語</option><option value="et">エストニア語</option><option value="fi">フィンランド語</option><option value="fr">フランス語</option><option value="gl">ガリシア語</option><option value="ka">ジョージア語</option><option value="de">ドイツ語</option><option value="el">ギリシャ語</option><option value="gu">グジャラート語</option><option value="ht">ハイチ語</option><option value="he">ヘブライ語</option><option value="hi">ヒンディー語</option><option value="hu">ハンガリー語</option><option value="is">アイスランド語</option><option value="id">インドネシア語</option><option value="ga">アイルランド語</option><option value="it">イタリア語</option><option value="ja">日本語</option><option value="kn">カンナダ語</option><option value="kk">カザフ語</option><option value="km">クメール語</option><option value="ko">韓国語</option><option value="ky">キルギス語</option><option value="lo">ラオ語</option><option value="lv">ラトビア語</option><option value="lt">リトアニア語</option><option value="mk">マケドニア語</option><option value="ms">マレー語</option><option value="ml">マラヤーラム語</option><option value="mt">マルタ語</option><option value="mr">マラーティー語</option><option value="mn">モンゴル語</option><option value="my">ミャンマー語</option><option value="ne">ネパール語</option><option value="no">ノルウェー語</option><option value="or">オディア語</option><option value="fa">ペルシャ語</option><option value="pl">ポーランド語</option><option value="pt">ポルトガル語</option><option value="pa">パンジャブ語</option><option value="ro">ルーマニア語</option><option value="ru">ロシア語</option><option value="sr">セルビア語</option><option value="sk">スロバキア語</option><option value="sl">スロベニア語</option><option value="es">スペイン語</option><option value="sw">スワヒリ語</option><option value="sv">スウェーデン語</option><option value="tl">タガログ語</option><option value="tg">タジク語</option><option value="ta">タミル語</option><option value="te">テルグ語</option><option value="th">タイ語</option><option value="tr">トルコ語</option><option value="uk">ウクライナ語</option><option value="ur">ウルドゥー語</option><option value="uz">ウズベク語</option><option value="vi">ベトナム語</option><option value="cy">ウェールズ語</option><option value="yo">ヨルバ語</option><option value="zu">ズールー語</option><option value="ace">アチェ語</option><option value="ach">アチョリ語</option><option value="awa">アワディー語</option><option value="bal">バローチー語</option><option value="ban">バリ語</option><option value="ba">バシキール語</option><option value="bho">ボージュプリー語</option><option value="br">ブルトン語</option><option value="bug">ブギス語</option><option value="ch">チャモロ語</option><option value="cv">チュヴァシ語</option><option value="doi">ドーグリー語</option><option value="fj">フィジー語</option><option value="fon">フォン語</option><option value="fur">フリウリ語</option><option value="gaa">ガ語</option><option value="gom">コンカニ語</option><option value="ilo">イロカノ語</option><option value="kri">クリオ語</option><option value="ln">リンガラ語</option><option value="lg">ルガンダ語</option><option value="mai">マイティリー語</option><option value="mni-Mtei">マニプリ語</option><option value="lus">ミゾ語</option><option value="om">オロモ語</option><option value="pap">パピアメント語</option><option value="qu">ケチュア語</option><option value="sa">サンスクリット語</option><option value="nso">北ソト語</option><option value="ti">ティグリニャ語</option><option value="ts">ツォンガ語</option><option value="tn">ツワナ語</option><option value="tum">トゥンブカ語</option><option value="tw">トウィ語</option><option value="ve">ヴェンダ語</option><option value="war">ワライ語</option><option value="wo">ウォロフ語</option><option value="yue">広東語</option><option value="ber">ベルベル語</option></select>
+<div class="customer-listen-wrap">
+  <button id="listenCustomerBtn" class="primary">🎤 お客さまの話を聞く</button>
+</div>
 
 <div class="toolbar">
-<button class="primary" id="addPhrase">＋ フレーズを追加</button>
-<button class="edit" id="editMode">↕ 並べ替え・削除</button>
+
+<button class="edit" id="editMode">編集</button>
 <div style="display:flex;align-items:center;gap:8px;margin:0 0 12px"><label for="columns" style="margin:0;white-space:nowrap">フレーズの列数</label><select id="columns" style="margin:0;flex:1"><option value="1">1列</option><option value="2">2列</option><option value="3">3列</option><option value="4">4列</option></select></div>
 </div>
 <div id="buttons" class="grid"></div>
 
-<div class="free"><input id="custom" placeholder="その他の文章を日本語で入力"><button class="primary" id="customSpeak">🔊 再生</button></div>
+<div class="free"><input id="custom" placeholder="その他の文章を日本語で入力">
+<button id="addCustomPhrase" class="edit">＋ 追加</button><button class="primary" id="customSpeak">🔊 再生</button></div>
 <div id="status" class="status"></div>
 </div>
 
@@ -140,6 +208,20 @@ button{padding:14px 12px;border:0;border-radius:13px;background:#fff;box-shadow:
   </div>
   <div id="customerSubSettingsBody"></div>
 </div></div>
+<div id="phraseEditDialog" class="dialog">
+  <div class="panel">
+    <h2>フレーズを変更</h2>
+    <label for="phraseEditInput">日本語のフレーズ</label>
+    <input id="phraseEditInput" placeholder="フレーズを入力">
+    <div id="phraseEditPreview" style="margin:10px 0 14px;min-height:50px"></div>
+    <div class="actions">
+      <button id="cancelPhraseEdit">キャンセル</button>
+      <button class="primary" id="savePhraseEdit">保存</button>
+    </div>
+  </div>
+</div>
+</div>
+
 <script>
 const initialPhrases=[];
 
@@ -183,10 +265,37 @@ const $=id=>document.getElementById(id);
 const position=$("position"),buttons=$("buttons"),status=$("status");
 
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
-function list(){return state.phrases[state.selected]}
+function list(){
+  if(!state || !Array.isArray(state.positions) || !state.positions.length){
+    state={positions:["受付"],phrases:{"受付":[]},selected:"受付"};
+  }
+  if(!state.selected || !state.positions.includes(state.selected)){
+    state.selected=state.positions[0];
+  }
+  if(!state.phrases)state.phrases={};
+  if(!Array.isArray(state.phrases[state.selected])){
+    state.phrases[state.selected]=[];
+  }
+  return state.phrases[state.selected];
+}
 function renderPositions(){
+ if(!position)return;
+ if(!Array.isArray(state.positions)||!state.positions.length){
+   state.positions=["受付"];
+   if(!state.phrases)state.phrases={};
+   if(!Array.isArray(state.phrases["受付"]))state.phrases["受付"]=[];
+   state.selected="受付";
+   save();
+ }
  position.innerHTML="";
- state.positions.forEach(p=>{let o=document.createElement("option");o.value=p;o.textContent=p;if(p===state.selected)o.selected=true;position.appendChild(o)})
+ state.positions.forEach(p=>{
+   let o=document.createElement("option");
+   o.value=p;
+   o.textContent=p;
+   if(p===state.selected)o.selected=true;
+   position.appendChild(o);
+ });
+ position.value=state.selected;
 }
 function render(){
  renderPositions();$("columns").value=columns;buttons.style.setProperty("--cols",columns);let arr=list();buttons.innerHTML="";
@@ -202,10 +311,11 @@ function render(){
        st.className="stop";
        st.textContent="■ 停止";
        st.onclick=(e)=>{e.stopPropagation();stopSpeaking();};
-       sp.onclick=()=>translateAndSpeak(arr[slot],st);
+       sp.onclick=()=>{if(edit)editPhraseText(slot);else translateAndSpeak(arr[slot],st)};
        c.appendChild(sp);
        c.appendChild(st);
      }else{
+       sp.onclick=()=>editPhraseText(slot);
        c.appendChild(sp);
      }
      if(edit){
@@ -217,14 +327,96 @@ function render(){
  }
 }
 $("columns").onchange=()=>{columns=Number($("columns").value);if(![1,2,3,4].includes(columns))columns=1;localStorage.setItem("foreignServiceColumns",String(columns));render();status.textContent=columns+"列表示に変更しました。"};
-position.onchange=()=>{state.selected=position.value;edit=false;moving=null;$("editMode").textContent="↕ 並べ替え・削除";save();render();status.textContent=state.selected+" のフレーズを表示しています。"};
-$("editMode").onclick=()=>{edit=!edit;moving=null;$("editMode").textContent=edit?"✓ 完了":"↕ 並べ替え・削除";render()};
+position.onchange=()=>{state.selected=position.value;edit=false;moving=null;$("editMode").textContent="編集";save();render();status.textContent=state.selected+" のフレーズを表示しています。"};
+$("editMode").onclick=()=>{edit=!edit;moving=null;$("editMode").textContent=edit?"✓ 完了":"編集";render()};
 function startMove(i){moving=i;status.textContent="移動先の「ここに移動」を押してください。";render()}
 function moveTo(slot){let a=list();let item=a.splice(moving,1)[0];let target=slot;if(moving<slot)target--;a.splice(target,0,item);moving=null;save();render();status.textContent="フレーズを移動しました。"}
+
+let editingPhraseIndex=null;
+let phraseEditTimer=null;
+let phraseEditRequestId=0;
+
+function editPhraseText(i){
+  editingPhraseIndex=i;
+  const input=$("phraseEditInput");
+  input.value=list()[i] || "";
+  $("phraseEditPreview").innerHTML="";
+  $("phraseEditDialog").classList.add("show");
+  setTimeout(()=>{
+    input.focus();
+    input.setSelectionRange(input.value.length,input.value.length);
+    schedulePhraseEditPreview();
+  },50);
+}
+
+function closePhraseEdit(){
+  $("phraseEditDialog").classList.remove("show");
+  editingPhraseIndex=null;
+  clearTimeout(phraseEditTimer);
+}
+
+function schedulePhraseEditPreview(){
+  clearTimeout(phraseEditTimer);
+  const text=$("phraseEditInput").value;
+  phraseEditTimer=setTimeout(()=>{
+    showPhraseEditPreview(text);
+  },350);
+}
+
+async function showPhraseEditPreview(text){
+  const preview=$("phraseEditPreview");
+  const requestId=++phraseEditRequestId;
+
+  if(!text || !text.trim()){
+    preview.innerHTML="";
+    return;
+  }
+
+  preview.textContent="翻訳しています…";
+
+  try{
+    const targetLang=$("lang").value;
+
+    const forwardUrl="https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl="+encodeURIComponent(targetLang)+"&dt=t&q="+encodeURIComponent(text);
+    const forwardRes=await fetch(forwardUrl);
+    const forwardData=await forwardRes.json();
+    const translated=forwardData[0].map(x=>x[0]).join("");
+
+    let backTranslated=text;
+    if(targetLang!=="ja"){
+      const backUrl="https://translate.googleapis.com/translate_a/single?client=gtx&sl="+encodeURIComponent(targetLang)+"&tl=ja&dt=t&q="+encodeURIComponent(translated);
+      const backRes=await fetch(backUrl);
+      const backData=await backRes.json();
+      backTranslated=backData[0].map(x=>x[0]).join("");
+    }
+
+    if(requestId!==phraseEditRequestId)return;
+
+    preview.innerHTML="";
+
+    const translatedLine=document.createElement("div");
+    translatedLine.textContent=translated;
+    translatedLine.style.fontWeight="700";
+    translatedLine.style.fontSize="18px";
+    preview.appendChild(translatedLine);
+
+    const backLine=document.createElement("div");
+    backLine.textContent="逆翻訳： "+backTranslated;
+    backLine.style.marginTop="6px";
+    backLine.style.fontSize="14px";
+    backLine.style.color="#666";
+    preview.appendChild(backLine);
+
+  }catch(e){
+    if(requestId!==phraseEditRequestId)return;
+    preview.textContent="翻訳に失敗しました。インターネット接続を確認してください。";
+  }
+}
+
+
 function delPhrase(i){if(confirm("このフレーズを削除しますか？")){list().splice(i,1);moving=null;save();render();status.textContent="フレーズを削除しました。"}}
 
 function show(id){$(id).classList.add("show")}function hide(id){$(id).classList.remove("show")}
-$("addPhrase").onclick=()=>{$("phraseInput").value="";show("phraseDialog");setTimeout(()=>$("phraseInput").focus(),50)};
 $("cancelPhrase").onclick=()=>hide("phraseDialog");
 $("savePhrase").onclick=()=>{let v=$("phraseInput").value.trim();if(!v)return;list().push(v);save();render();hide("phraseDialog");status.textContent="フレーズを追加しました。"};
 
@@ -297,6 +489,75 @@ function stopSpeaking(){
   setActiveStopButton(null);
   status.textContent="音声を停止しました。";
 }
+
+let liveTranslationTimer=null;
+let liveTranslationRequestId=0;
+
+function addCustomPhraseToCurrentPosition(){
+ const v=$("custom").value.trim();
+ if(!v)return;
+ list().push(v);
+ save();
+ render();
+ status.textContent="フレーズを追加しました。";
+}
+
+async function showTranslationPreview(text){
+  const requestId=++liveTranslationRequestId;
+
+  if(!text || !text.trim()){
+    status.innerHTML="";
+    return;
+  }
+
+  status.textContent="翻訳しています…";
+
+  try{
+    const targetLang=$("lang").value;
+
+    const forwardUrl="https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl="+encodeURIComponent(targetLang)+"&dt=t&q="+encodeURIComponent(text);
+    const forwardRes=await fetch(forwardUrl);
+    const forwardData=await forwardRes.json();
+    const translated=forwardData[0].map(x=>x[0]).join("");
+
+    let backTranslated=text;
+    if(targetLang!=="ja"){
+      const backUrl="https://translate.googleapis.com/translate_a/single?client=gtx&sl="+encodeURIComponent(targetLang)+"&tl=ja&dt=t&q="+encodeURIComponent(translated);
+      const backRes=await fetch(backUrl);
+      const backData=await backRes.json();
+      backTranslated=backData[0].map(x=>x[0]).join("");
+    }
+
+    if(requestId!==liveTranslationRequestId)return;
+
+    status.innerHTML="";
+
+    const translatedLine=document.createElement("div");
+    translatedLine.textContent=translated;
+    translatedLine.style.fontWeight="700";
+    translatedLine.style.fontSize="18px";
+    status.appendChild(translatedLine);
+
+    const backLine=document.createElement("div");
+    backLine.textContent="逆翻訳： "+backTranslated;
+    backLine.style.marginTop="6px";
+    backLine.style.fontSize="14px";
+    backLine.style.color="#666";
+    status.appendChild(backLine);
+  }catch(e){
+    if(requestId!==liveTranslationRequestId)return;
+    status.textContent="翻訳に失敗しました。インターネット接続を確認してください。";
+  }
+}
+
+function scheduleLiveTranslation(){
+  clearTimeout(liveTranslationTimer);
+  const text=$("custom").value;
+  liveTranslationTimer=setTimeout(function(){
+    showTranslationPreview(text);
+  },350);
+}
+
 async function translateAndSpeak(text,stopButton){
  status.textContent="翻訳しています…";
  try{
@@ -681,7 +942,184 @@ document.getElementById("showCustomerView").onclick=()=>{
  renderCustomer();
 };
 
+
+$("addCustomPhrase").addEventListener("click",addCustomPhraseToCurrentPosition);
+$("custom").addEventListener("input",scheduleLiveTranslation);
+$("lang").addEventListener("change",function(){
+  const text=$("custom").value.trim();
+  if(text)showTranslationPreview(text);
+});
+
+
+if($("phraseEditInput"))$("phraseEditInput").addEventListener("input",schedulePhraseEditPreview);
+
+if($("cancelPhraseEdit"))$("cancelPhraseEdit").addEventListener("click",closePhraseEdit);
+
+if($("savePhraseEdit"))$("savePhraseEdit").addEventListener("click",()=>{
+  if(editingPhraseIndex===null)return;
+  const v=$("phraseEditInput").value.trim();
+  if(!v)return;
+  const arr=list();
+  if(editingPhraseIndex<0 || editingPhraseIndex>=arr.length)return;
+  arr[editingPhraseIndex]=v;
+  save();
+  render();
+  closePhraseEdit();
+  status.textContent="フレーズを変更しました。";
+});
+
+$("lang").addEventListener("change",()=>{
+  const dlg=$("phraseEditDialog");
+  if(dlg && dlg.classList.contains("show")){
+    schedulePhraseEditPreview();
+  }
+});
+
+
+
+
+
+
+
+let customerSpeechRecognition=null;
+
+function speechLangForSelectedOption(code){
+  const map={
+    "en":"en-US","ja":"ja-JP","zh-CN":"zh-CN","zh-TW":"zh-TW","ko":"ko-KR",
+    "th":"th-TH","vi":"vi-VN","id":"id-ID","es":"es-ES","fr":"fr-FR","de":"de-DE",
+    "pt":"pt-PT","ru":"ru-RU","it":"it-IT","ar":"ar-SA","hi":"hi-IN","ms":"ms-MY",
+    "tl":"fil-PH","tr":"tr-TR","nl":"nl-NL","pl":"pl-PL","uk":"uk-UA"
+  };
+  return map[code] || code;
+}
+
+async function translateCustomerSpeechToJapanese(text,sourceLang){
+  const jp=$("customerSpeechJapanese");
+  const original=$("customerSpeechOriginal");
+
+  jp.textContent="翻訳しています…";
+  original.textContent="認識した文章： "+text;
+
+  try{
+    if(sourceLang==="ja"){
+      jp.textContent=text;
+      return;
+    }
+
+    const url="https://translate.googleapis.com/translate_a/single?client=gtx&sl="+
+      encodeURIComponent(sourceLang)+"&tl=ja&dt=t&q="+encodeURIComponent(text);
+
+    const r=await fetch(url);
+    const d=await r.json();
+    const translated=d[0].map(x=>x[0]).join("");
+
+    jp.textContent=translated || "翻訳できませんでした。";
+  }catch(e){
+    jp.textContent="翻訳に失敗しました。インターネット接続を確認してください。";
+  }
+}
+
+function stopCustomerSpeechRecognition(){
+  try{
+    if(customerSpeechRecognition)customerSpeechRecognition.abort();
+  }catch(e){}
+  customerSpeechRecognition=null;
+
+  const btn=$("listenCustomerBtn");
+  if(btn){
+    btn.classList.remove("listening");
+    btn.textContent="🎤 お客さまの話を聞く";
+  }
+}
+
+function startCustomerSpeechRecognition(){
+  const SR=window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn=$("listenCustomerBtn");
+  const jp=$("customerSpeechJapanese");
+  const original=$("customerSpeechOriginal");
+
+  if(!SR){
+    jp.textContent="このブラウザでは音声認識を利用できません。";
+    original.textContent="Android版Chromeの最新版でお試しください。";
+    return;
+  }
+
+  if(customerSpeechRecognition){
+    stopCustomerSpeechRecognition();
+    return;
+  }
+
+  const selectedLang=$("lang").value;
+  const recognition=new SR();
+  customerSpeechRecognition=recognition;
+
+  recognition.lang=speechLangForSelectedOption(selectedLang);
+  recognition.continuous=false;
+  recognition.interimResults=true;
+  recognition.maxAlternatives=1;
+
+  recognition.onstart=()=>{
+    btn.classList.add("listening");
+    btn.textContent="■ 聞き取りを停止";
+    jp.textContent="聞き取り中です…";
+    original.textContent="選択中の言語でお客さまに話してもらってください。";
+  };
+
+  recognition.onresult=(event)=>{
+    let interim="";
+    let finalText="";
+
+    for(let i=event.resultIndex;i<event.results.length;i++){
+      const text=event.results[i][0].transcript;
+      if(event.results[i].isFinal)finalText+=text;
+      else interim+=text;
+    }
+
+    const shown=(finalText || interim).trim();
+    if(shown){
+      original.textContent="認識した文章： "+shown;
+    }
+
+    if(finalText.trim()){
+      translateCustomerSpeechToJapanese(finalText.trim(),selectedLang);
+    }
+  };
+
+  recognition.onerror=(event)=>{
+    let msg="音声認識に失敗しました。";
+    if(event.error==="not-allowed" || event.error==="service-not-allowed"){
+      msg="マイクが許可されていません。ChromeまたはPWAのマイク権限を確認してください。";
+    }else if(event.error==="no-speech"){
+      msg="音声を聞き取れませんでした。もう一度お試しください。";
+    }else if(event.error==="network"){
+      msg="音声認識の通信に失敗しました。インターネット接続を確認してください。";
+    }
+    jp.textContent=msg;
+  };
+
+  recognition.onend=()=>{
+    customerSpeechRecognition=null;
+    btn.classList.remove("listening");
+    btn.textContent="🎤 お客さまの話を聞く";
+  };
+
+  try{
+    recognition.start();
+  }catch(e){
+    customerSpeechRecognition=null;
+    jp.textContent="音声認識を開始できませんでした。少し待ってからもう一度お試しください。";
+  }
+}
+
+if($("listenCustomerBtn")){
+  $("listenCustomerBtn").addEventListener("click",startCustomerSpeechRecognition);
+}
+
+
 render();
 </script>
-</div><div id="customerView"><div class="wrap"><div id="customerStep"></div></div></div></body>
+</div><div id="customerView"><div class="wrap"><div id="customerStep"></div></div></div>
+</div>
+
+</body>
 </html>
