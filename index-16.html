@@ -1,0 +1,1095 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>外国語接客ボード</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f4f4;color:#222;font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif}
+.wrap{max-width:820px;margin:auto;padding:16px}h1{font-size:27px;margin:6px 0 18px}
+label{font-weight:700;display:block;margin-bottom:7px}
+select,input,button{font:inherit}select{width:100%;padding:14px;border:1px solid #bbb;border-radius:12px;background:#fff}
+.position-row{display:flex;gap:8px;margin-bottom:18px}.position-row select{flex:1}.position-row button{width:150px;white-space:nowrap}
+.toolbar{display:flex;gap:8px;margin:12px 0}.toolbar button{flex:1}
+button{padding:14px 12px;border:0;border-radius:13px;background:#fff;box-shadow:0 2px 8px #0001;font-weight:700;cursor:pointer}
+.primary{background:#222;color:#fff}.edit{background:#e9e9e9}.delete{background:#fff0f0;color:#b00020}.move{width:105px;background:#eee;font-size:14px}.stop{width:82px;min-width:82px;background:#ffe9e9;color:#a00000;display:none;white-space:nowrap}.stop.show{display:block}.stop.show{display:block}
+.grid{display:grid;grid-template-columns:repeat(var(--cols,1),minmax(0,1fr));gap:8px}.grid .insert-slot{grid-column:1/-1}.grid .card{min-width:0}.card{display:flex;gap:6px}.card .speak{flex:1;text-align:left}
+.insert-slot{display:none;border:2px dashed #aaa;border-radius:12px;padding:8px;background:#fafafa}.insert-slot.show{display:block}.insert-slot button{width:100%;box-shadow:none}
+.move-active{outline:3px solid #888}.free{display:flex;gap:8px;margin-top:18px;align-items:stretch}.free button{white-space:nowrap}.free input{flex:1;padding:14px;border:1px solid #bbb;border-radius:12px}
+.status{min-height:24px;margin-top:12px;font-size:14px}.dialog{position:fixed;inset:0;background:#0007;display:none;align-items:center;justify-content:center;padding:20px;z-index:20}.dialog.show{display:flex}
+.panel{width:min(560px,100%);background:#fff;border-radius:18px;padding:20px;box-shadow:0 10px 40px #0005}.panel h2{margin-top:0}.panel input{width:100%;padding:14px;margin:8px 0 14px;border:1px solid #bbb;border-radius:12px}
+.actions{display:flex;gap:8px}.actions button{flex:1}.manage-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}.manage-item{display:flex;gap:8px;align-items:center}.manage-item span{flex:1;padding:13px;border:1px solid #ddd;border-radius:10px;background:#fafafa}.manage-item button{padding:11px 9px;white-space:nowrap}
+.note{font-size:13px;color:#666;margin:0 0 14px}
+@media(max-width:560px){h1{font-size:24px.toolbar{flex-wrap:wrap}.toolbar>button{flex:1}.toolbar .columns-control{flex:1;min-width:130px}}.position-row button{width:125px;white-space:nowrap}.move{width:100px}}
+
+.view-switch{display:flex;gap:8px;margin-bottom:16px}
+.view-switch button{flex:1}
+.view-switch .active{background:#222;color:#fff}
+#customerView{display:none}
+.customer-card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 8px #0001;margin-bottom:14px}
+.customer-title{font-size:28px;font-weight:800;margin:0 0 8px}
+.customer-ja{font-size:13px;color:#666;margin-top:4px}
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choice-grid button{min-height:78px;text-align:center}
+.choice-main{display:block;font-size:19px;font-weight:800}
+.choice-sub{display:block;font-size:12px;color:#666;margin-top:5px;font-weight:500}
+.game-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.game-grid button{text-align:left;min-height:68px}
+.customer-back{margin-top:12px;width:100%}
+.customer-language-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:430px;overflow:auto}
+.customer-language-list button{text-align:left}
+.customer-confirm{font-size:22px;font-weight:800;line-height:1.45}
+@media(max-width:560px){.choice-grid,.customer-language-list{grid-template-columns:1fr}.customer-title{font-size:24px}}
+
+.customer-settings-btn{width:100%;margin:12px 0 4px;background:#e9e9e9}
+.settings-section{border-top:1px solid #ddd;padding-top:14px;margin-top:14px}
+.settings-section h3{margin:0 0 10px}
+.settings-row{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.settings-row .labelbox{flex:1;padding:11px;border:1px solid #ddd;border-radius:10px;background:#fafafa;min-width:0}
+.settings-row button{padding:10px 9px;white-space:nowrap}
+.settings-row .mini{width:44px;min-width:44px}
+@media(max-width:560px){.settings-row{flex-wrap:wrap}.settings-row .labelbox{width:100%;flex-basis:100%}}
+
+#customerSettingsDialog .panel,
+#customerSubSettingsDialog .panel{
+  max-height:88vh;
+  overflow-y:auto;
+}
+.settings-menu{display:grid;grid-template-columns:1fr;gap:10px}
+.settings-menu button{min-height:64px;text-align:left}
+.settings-header{
+  position:sticky;top:0;background:#fff;z-index:3;
+  display:flex;gap:8px;align-items:center;
+  padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #ddd
+}
+.settings-header h2{margin:0;flex:1}
+.settings-header button{white-space:nowrap}
+
+#phraseEditDialog .panel{max-width:620px}
+#phraseEditInput{width:100%;font-size:18px}
+#phraseEditPreview{
+  background:#f7f7f7;
+  border:1px solid #ddd;
+  border-radius:12px;
+  padding:12px;
+}
+
+
+
+
+
+
+
+
+.customer-speech-panel{
+  background:#fff;
+  border-radius:14px;
+  padding:14px 16px;
+  margin-bottom:14px;
+  box-shadow:0 2px 8px #0001;
+  border:1px solid #ddd;
+}
+.customer-speech-title{
+  font-size:13px;
+  font-weight:700;
+  color:#666;
+  margin-bottom:6px;
+}
+.customer-speech-japanese{
+  font-size:24px;
+  font-weight:800;
+  line-height:1.45;
+  min-height:35px;
+}
+.customer-speech-original{
+  margin-top:8px;
+  font-size:13px;
+  color:#666;
+  line-height:1.4;
+}
+.customer-listen-wrap{
+  margin:10px 0 16px;
+}
+.customer-listen-wrap button{
+  width:100%;
+  min-height:52px;
+  display:block;
+  white-space:nowrap;
+}
+.customer-listen-wrap button.listening{
+  outline:3px solid #999;
+}
+
+
+.board-title-row{display:flex;align-items:center;gap:8px;margin:6px 0 18px}
+.board-title-row h1{margin:0;flex:1;min-width:0}
+.globe-toggle{flex:0 0 auto;width:50px;height:50px;padding:0;font-size:28px;display:flex;align-items:center;justify-content:center}
+.translation-mode-btn,.translation-reset-btn{flex:0 0 auto;white-space:nowrap;min-height:46px}
+.translation-sticky-header{position:sticky;top:0;z-index:1000;background:#222;color:#fff;padding:12px 16px;box-shadow:0 3px 12px #0003;cursor:pointer}
+.translation-sticky-japanese{font-size:22px;font-weight:800;line-height:1.4}
+.translation-sticky-hint{font-size:11px;opacity:.72;margin-top:3px}
+.translation-history-panel{max-height:82vh;overflow:auto}
+.translation-history-list{display:flex;flex-direction:column;gap:10px;margin:12px 0 18px}
+.translation-history-item{background:#f4f4f4;border-radius:12px;padding:12px}
+.translation-history-ja{font-size:18px;font-weight:800;line-height:1.4}
+.translation-history-original{margin-top:5px;font-size:13px;color:#666;line-height:1.4}
+.customer-view-topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.customer-screen-label{font-size:20px;font-weight:800}
+@media(max-width:700px){.board-title-row{flex-wrap:wrap}.board-title-row h1{font-size:24px}.translation-mode-btn,.translation-reset-btn{font-size:14px;padding:12px 10px}}
+</style>
+</head>
+<body>
+<div id="translationStickyHeader" class="translation-sticky-header" style="display:none" role="button" tabindex="0">
+<div id="translationStickyJapanese" class="translation-sticky-japanese"></div>
+<div class="translation-sticky-hint">タップすると翻訳履歴を表示</div>
+</div>
+<div id="staffView">
+<div class="wrap">
+<div class="board-title-row">
+<button id="viewToggleGlobe" class="globe-toggle" aria-label="画面を切り替え">🌏</button>
+<h1>外国語接客ボード</h1>
+<button id="translationModeBtn" class="edit translation-mode-btn">翻訳モード</button>
+<button id="translationResetBtn" class="translation-reset-btn" style="display:none">リセット</button>
+</div>
+
+<label for="position">ポジションを選択</label>
+<div class="position-row">
+<select id="position"></select>
+<button id="managePosition">⚙ ポジション管理</button>
+</div>
+
+<label for="lang">言語を選択</label>
+<select id="lang"><option value="en">英語</option><option value="af">アフリカーンス語</option><option value="sq">アルバニア語</option><option value="am">アムハラ語</option><option value="ar">アラビア語</option><option value="hy">アルメニア語</option><option value="az">アゼルバイジャン語</option><option value="eu">バスク語</option><option value="bn">ベンガル語</option><option value="bg">ブルガリア語</option><option value="ca">カタルーニャ語</option><option value="zh-CN">中国語（簡体）</option><option value="zh-TW">中国語（繁体）</option><option value="hr">クロアチア語</option><option value="cs">チェコ語</option><option value="da">デンマーク語</option><option value="nl">オランダ語</option><option value="et">エストニア語</option><option value="fi">フィンランド語</option><option value="fr">フランス語</option><option value="gl">ガリシア語</option><option value="ka">ジョージア語</option><option value="de">ドイツ語</option><option value="el">ギリシャ語</option><option value="gu">グジャラート語</option><option value="ht">ハイチ語</option><option value="he">ヘブライ語</option><option value="hi">ヒンディー語</option><option value="hu">ハンガリー語</option><option value="is">アイスランド語</option><option value="id">インドネシア語</option><option value="ga">アイルランド語</option><option value="it">イタリア語</option><option value="ja">日本語</option><option value="kn">カンナダ語</option><option value="kk">カザフ語</option><option value="km">クメール語</option><option value="ko">韓国語</option><option value="ky">キルギス語</option><option value="lo">ラオ語</option><option value="lv">ラトビア語</option><option value="lt">リトアニア語</option><option value="mk">マケドニア語</option><option value="ms">マレー語</option><option value="ml">マラヤーラム語</option><option value="mt">マルタ語</option><option value="mr">マラーティー語</option><option value="mn">モンゴル語</option><option value="my">ミャンマー語</option><option value="ne">ネパール語</option><option value="no">ノルウェー語</option><option value="or">オディア語</option><option value="fa">ペルシャ語</option><option value="pl">ポーランド語</option><option value="pt">ポルトガル語</option><option value="pa">パンジャブ語</option><option value="ro">ルーマニア語</option><option value="ru">ロシア語</option><option value="sr">セルビア語</option><option value="sk">スロバキア語</option><option value="sl">スロベニア語</option><option value="es">スペイン語</option><option value="sw">スワヒリ語</option><option value="sv">スウェーデン語</option><option value="tl">タガログ語</option><option value="tg">タジク語</option><option value="ta">タミル語</option><option value="te">テルグ語</option><option value="th">タイ語</option><option value="tr">トルコ語</option><option value="uk">ウクライナ語</option><option value="ur">ウルドゥー語</option><option value="uz">ウズベク語</option><option value="vi">ベトナム語</option><option value="cy">ウェールズ語</option><option value="yo">ヨルバ語</option><option value="zu">ズールー語</option><option value="ace">アチェ語</option><option value="ach">アチョリ語</option><option value="awa">アワディー語</option><option value="bal">バローチー語</option><option value="ban">バリ語</option><option value="ba">バシキール語</option><option value="bho">ボージュプリー語</option><option value="br">ブルトン語</option><option value="bug">ブギス語</option><option value="ch">チャモロ語</option><option value="cv">チュヴァシ語</option><option value="doi">ドーグリー語</option><option value="fj">フィジー語</option><option value="fon">フォン語</option><option value="fur">フリウリ語</option><option value="gaa">ガ語</option><option value="gom">コンカニ語</option><option value="ilo">イロカノ語</option><option value="kri">クリオ語</option><option value="ln">リンガラ語</option><option value="lg">ルガンダ語</option><option value="mai">マイティリー語</option><option value="mni-Mtei">マニプリ語</option><option value="lus">ミゾ語</option><option value="om">オロモ語</option><option value="pap">パピアメント語</option><option value="qu">ケチュア語</option><option value="sa">サンスクリット語</option><option value="nso">北ソト語</option><option value="ti">ティグリニャ語</option><option value="ts">ツォンガ語</option><option value="tn">ツワナ語</option><option value="tum">トゥンブカ語</option><option value="tw">トウィ語</option><option value="ve">ヴェンダ語</option><option value="war">ワライ語</option><option value="wo">ウォロフ語</option><option value="yue">広東語</option><option value="ber">ベルベル語</option></select>
+
+
+<div class="toolbar">
+
+<button class="edit" id="editMode">編集</button>
+<div style="display:flex;align-items:center;gap:8px;margin:0 0 12px"><label for="columns" style="margin:0;white-space:nowrap">フレーズの列数</label><select id="columns" style="margin:0;flex:1"><option value="1">1列</option><option value="2">2列</option><option value="3">3列</option><option value="4">4列</option></select></div>
+</div>
+<div id="buttons" class="grid"></div>
+
+<div class="free"><input id="custom" placeholder="その他の文章を日本語で入力">
+<button id="addCustomPhrase" class="edit">＋ 追加</button><button class="primary" id="customSpeak">🔊 再生</button></div>
+<div id="status" class="status"></div>
+</div>
+
+<div id="positionDialog" class="dialog"><div class="panel">
+<h2>ポジション管理</h2><p class="note">ポジションごとに別々のフレーズを保存できます。</p>
+<div id="positionList" class="manage-list"></div>
+<button class="primary" style="width:100%;margin-bottom:8px" id="addPosition">＋ ポジションを追加</button>
+<button style="width:100%" id="closePosition">閉じる</button>
+</div></div>
+
+<div id="nameDialog" class="dialog"><div class="panel">
+<h2 id="nameTitle">ポジションを追加</h2>
+<input id="positionName" placeholder="例：受付">
+<div class="actions"><button id="cancelName">キャンセル</button><button class="primary" id="saveName">保存</button></div>
+</div></div>
+
+<div id="phraseDialog" class="dialog"><div class="panel">
+<h2>フレーズを追加</h2>
+<input id="phraseInput" placeholder="例：こちらでお待ちください">
+<div class="actions"><button id="cancelPhrase">キャンセル</button><button class="primary" id="savePhrase">追加</button></div>
+</div></div>
+
+
+<div class="wrap"><button class="customer-settings-btn" id="openCustomerSettings">⚙ お客さま用設定</button></div>
+
+<div id="customerSettingsDialog" class="dialog"><div class="panel">
+  <div class="settings-header">
+    <h2>お客さま用設定</h2>
+    <button id="closeCustomerSettings">閉じる</button>
+  </div>
+  <p class="note">設定したい項目を選んでください。</p>
+  <div class="settings-menu">
+    <button id="openLanguageSettings">🌐 言語の選択肢を設定</button>
+    <button id="openPurposeSettings">📝 用件の選択肢を設定</button>
+    <button id="openGameSettings">🎮 ゲームの選択肢を設定</button>
+  </div>
+</div></div>
+
+<div id="customerSubSettingsDialog" class="dialog"><div class="panel">
+  <div class="settings-header">
+    <button id="backCustomerSettings">← 戻る</button>
+    <h2 id="customerSubSettingsTitle">設定</h2>
+    <button id="closeCustomerSubSettings">閉じる</button>
+  </div>
+  <div id="customerSubSettingsBody"></div>
+</div></div>
+<div id="phraseEditDialog" class="dialog">
+  <div class="panel">
+    <h2>フレーズを変更</h2>
+    <label for="phraseEditInput">日本語のフレーズ</label>
+    <input id="phraseEditInput" placeholder="フレーズを入力">
+    <div id="phraseEditPreview" style="margin:10px 0 14px;min-height:50px"></div>
+    <div class="actions">
+      <button id="cancelPhraseEdit">キャンセル</button>
+      <button class="primary" id="savePhraseEdit">保存</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="translationHistoryDialog" class="dialog"><div class="panel translation-history-panel">
+<h2>翻訳履歴</h2><div id="translationHistoryList" class="translation-history-list"></div>
+<div class="actions"><button id="closeTranslationHistory">閉じる</button></div>
+</div></div>
+</div>
+
+<div id="customerView" style="display:none"><div class="wrap">
+<div class="customer-view-topbar"><button id="customerViewToggleGlobe" class="globe-toggle" aria-label="スタッフ用に切り替え">🌏</button><div class="customer-screen-label">お客さま用</div></div>
+<div id="customerStep"></div></div></div>
+
+<script>
+const initialPhrases=[];
+
+const KEY="foreignServicePositions_v2";
+let state;
+try{state=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){state=null}
+if(!state){
+  // Migrate the previous single-list data if it exists.
+  let old=[];
+  try{old=JSON.parse(localStorage.getItem("foreignServicePhrases")||"null")}catch(e){}
+  if(!Array.isArray(old))old=initialPhrases.slice();
+  state={positions:["受付"],phrases:{"受付":old},selected:"受付"};
+}
+if(!Array.isArray(state.positions)||!state.positions.length)state.positions=["受付"];
+if(!state.phrases)state.phrases={};
+state.positions.forEach(x=>{if(!Array.isArray(state.phrases[x]))state.phrases[x]=[]});
+if(!state.selected||!state.positions.includes(state.selected))state.selected=state.positions[0];
+
+function repairSavedBoardState(){
+ if(!state || typeof state!=="object")return;
+ if(!Array.isArray(state.positions))state.positions=[];
+ if(!state.phrases || typeof state.phrases!=="object")state.phrases={};
+ Object.keys(state.phrases).forEach(name=>{
+   if(!state.positions.includes(name))state.positions.push(name);
+ });
+ if(!state.positions.length)state.positions=["受付"];
+ state.positions.forEach(name=>{
+   if(!Array.isArray(state.phrases[name]))state.phrases[name]=[];
+ });
+ if(!state.selected || !state.positions.includes(state.selected))state.selected=state.positions[0];
+ localStorage.setItem(KEY,JSON.stringify(state));
+}
+repairSavedBoardState();
+
+const ORIGINAL_DEFAULT_PHRASES=["予約されていますか？", "チケットをお持ちですか？", "チケットを確認します。チケットを見せてください。", "画面を触っていいですか？", "お店を出て左側にロッカーがあります。", "ロッカーに荷物を預けてください。", "スタッフが呼びにくるまでロッカーの前でお待ちください。", "トイレは奥のグレーの扉です。", "何人で参加しますか？", "チケットのサイトにログインしてください。", "受付開始の時間は10分前からです。"];
+const DEFAULT_PHRASE_MIGRATION_KEY="removeOriginalDefaultPhrases_v1";
+if(localStorage.getItem(DEFAULT_PHRASE_MIGRATION_KEY)!=="done"){
+  try{
+    if(state && state.phrases){
+      Object.keys(state.phrases).forEach(function(pos){
+        if(Array.isArray(state.phrases[pos])){
+          state.phrases[pos]=state.phrases[pos].filter(function(p){
+            return !ORIGINAL_DEFAULT_PHRASES.includes(p);
+          });
+        }
+      });
+      localStorage.setItem(KEY,JSON.stringify(state));
+    }
+    localStorage.setItem(DEFAULT_PHRASE_MIGRATION_KEY,"done");
+  }catch(e){}
+}
+
+
+let edit=false,moving=null,editingPosition=null;
+let columns=Number(localStorage.getItem("foreignServiceColumns")||"1");
+if(![1,2,3,4].includes(columns))columns=1;
+const $=id=>document.getElementById(id);
+const position=$("position"),buttons=$("buttons"),status=$("status");
+
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function list(){
+ if(!state.phrases)state.phrases={};
+ if(!Array.isArray(state.positions)||!state.positions.length)state.positions=["受付"];
+ if(!state.selected || !state.positions.includes(state.selected))state.selected=state.positions[0];
+ if(!Array.isArray(state.phrases[state.selected]))state.phrases[state.selected]=[];
+ return state.phrases[state.selected];
+}
+function renderPositions(){
+ if(!position)return;
+ if(!Array.isArray(state.positions)||!state.positions.length){
+   state.positions=["受付"];
+   if(!state.phrases)state.phrases={};
+   if(!Array.isArray(state.phrases["受付"]))state.phrases["受付"]=[];
+   state.selected="受付";
+   save();
+ }
+ position.innerHTML="";
+ state.positions.forEach(p=>{
+   let o=document.createElement("option");
+   o.value=p;
+   o.textContent=p;
+   if(p===state.selected)o.selected=true;
+   position.appendChild(o);
+ });
+ position.value=state.selected;
+}
+function render(){
+ renderPositions();$("columns").value=columns;buttons.style.setProperty("--cols",columns);let arr=list();buttons.innerHTML="";
+ for(let slot=0;slot<=arr.length;slot++){
+   let ins=document.createElement("div");ins.className="insert-slot"+(moving!==null?" show":"");
+   if(moving!==null){let b=document.createElement("button");b.textContent=slot===0?"⬆ ここに移動（先頭）":slot===arr.length?"⬇ ここに移動（最後）":"↕ ここに移動";b.onclick=()=>moveTo(slot);ins.appendChild(b)}
+   buttons.appendChild(ins);
+   if(slot<arr.length){
+     let c=document.createElement("div");c.className="card"+(moving===slot?" move-active":"");
+     let sp=document.createElement("button");sp.className="speak";sp.textContent=(edit?"☰ ":"🔊 ")+arr[slot];
+     if(!edit){
+       let st=document.createElement("button");
+       st.className="stop";
+       st.textContent="■ 停止";
+       st.onclick=(e)=>{e.stopPropagation();stopSpeaking();};
+       sp.onclick=()=>{if(edit)editPhraseText(slot);else translateAndSpeak(arr[slot],st)};
+       c.appendChild(sp);
+       c.appendChild(st);
+     }else{
+       sp.onclick=()=>editPhraseText(slot);
+       c.appendChild(sp);
+     }
+     if(edit){
+       let m=document.createElement("button");m.className="move";m.textContent=moving===slot?"移動中…":"位置を移動";m.onclick=()=>startMove(slot);c.appendChild(m);
+       let d=document.createElement("button");d.className="delete";d.textContent="削除";d.onclick=()=>delPhrase(slot);c.appendChild(d)
+     }
+     buttons.appendChild(c)
+   }
+ }
+}
+$("columns").onchange=()=>{columns=Number($("columns").value);if(![1,2,3,4].includes(columns))columns=1;localStorage.setItem("foreignServiceColumns",String(columns));render();status.textContent=columns+"列表示に変更しました。"};
+position.onchange=()=>{state.selected=position.value;edit=false;moving=null;$("editMode").textContent="編集";save();render();status.textContent=state.selected+" のフレーズを表示しています。"};
+$("editMode").onclick=()=>{edit=!edit;moving=null;$("editMode").textContent=edit?"✓ 完了":"編集";render()};
+function startMove(i){moving=i;status.textContent="移動先の「ここに移動」を押してください。";render()}
+function moveTo(slot){let a=list();let item=a.splice(moving,1)[0];let target=slot;if(moving<slot)target--;a.splice(target,0,item);moving=null;save();render();status.textContent="フレーズを移動しました。"}
+
+let editingPhraseIndex=null;
+let phraseEditTimer=null;
+let phraseEditRequestId=0;
+
+function editPhraseText(i){
+  editingPhraseIndex=i;
+  const input=$("phraseEditInput");
+  input.value=list()[i] || "";
+  $("phraseEditPreview").innerHTML="";
+  $("phraseEditDialog").classList.add("show");
+  setTimeout(()=>{
+    input.focus();
+    input.setSelectionRange(input.value.length,input.value.length);
+    schedulePhraseEditPreview();
+  },50);
+}
+
+function closePhraseEdit(){
+  $("phraseEditDialog").classList.remove("show");
+  editingPhraseIndex=null;
+  clearTimeout(phraseEditTimer);
+}
+
+function schedulePhraseEditPreview(){
+  clearTimeout(phraseEditTimer);
+  const text=$("phraseEditInput").value;
+  phraseEditTimer=setTimeout(()=>{
+    showPhraseEditPreview(text);
+  },350);
+}
+
+async function showPhraseEditPreview(text){
+  const preview=$("phraseEditPreview");
+  const requestId=++phraseEditRequestId;
+
+  if(!text || !text.trim()){
+    preview.innerHTML="";
+    return;
+  }
+
+  preview.textContent="翻訳しています…";
+
+  try{
+    const targetLang=$("lang").value;
+
+    const forwardUrl="https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl="+encodeURIComponent(targetLang)+"&dt=t&q="+encodeURIComponent(text);
+    const forwardRes=await fetch(forwardUrl);
+    const forwardData=await forwardRes.json();
+    const translated=forwardData[0].map(x=>x[0]).join("");
+
+    let backTranslated=text;
+    if(targetLang!=="ja"){
+      const backUrl="https://translate.googleapis.com/translate_a/single?client=gtx&sl="+encodeURIComponent(targetLang)+"&tl=ja&dt=t&q="+encodeURIComponent(translated);
+      const backRes=await fetch(backUrl);
+      const backData=await backRes.json();
+      backTranslated=backData[0].map(x=>x[0]).join("");
+    }
+
+    if(requestId!==phraseEditRequestId)return;
+
+    preview.innerHTML="";
+
+    const translatedLine=document.createElement("div");
+    translatedLine.textContent=translated;
+    translatedLine.style.fontWeight="700";
+    translatedLine.style.fontSize="18px";
+    preview.appendChild(translatedLine);
+
+    const backLine=document.createElement("div");
+    backLine.textContent="逆翻訳： "+backTranslated;
+    backLine.style.marginTop="6px";
+    backLine.style.fontSize="14px";
+    backLine.style.color="#666";
+    preview.appendChild(backLine);
+
+  }catch(e){
+    if(requestId!==phraseEditRequestId)return;
+    preview.textContent="翻訳に失敗しました。インターネット接続を確認してください。";
+  }
+}
+
+
+function delPhrase(i){if(confirm("このフレーズを削除しますか？")){list().splice(i,1);moving=null;save();render();status.textContent="フレーズを削除しました。"}}
+
+function show(id){$(id).classList.add("show")}function hide(id){$(id).classList.remove("show")}
+$("cancelPhrase").onclick=()=>hide("phraseDialog");
+$("savePhrase").onclick=()=>{let v=$("phraseInput").value.trim();if(!v)return;list().push(v);save();render();hide("phraseDialog");status.textContent="フレーズを追加しました。"};
+
+$("managePosition").onclick=()=>{renderPositionManager();show("positionDialog")};
+$("closePosition").onclick=()=>hide("positionDialog");
+function renderPositionManager(){
+ let box=$("positionList");box.innerHTML="";
+ state.positions.forEach((p,i)=>{
+  let row=document.createElement("div");row.className="manage-item";
+  let s=document.createElement("span");s.textContent=p;row.appendChild(s);
+
+  let up=document.createElement("button");up.textContent="↑";up.title="上へ";
+  up.disabled=i===0;up.onclick=()=>movePosition(i,-1);row.appendChild(up);
+
+  let down=document.createElement("button");down.textContent="↓";down.title="下へ";
+  down.disabled=i===state.positions.length-1;down.onclick=()=>movePosition(i,1);row.appendChild(down);
+
+  let e=document.createElement("button");e.textContent="名前変更";e.onclick=()=>openRename(p);row.appendChild(e);
+  let d=document.createElement("button");d.className="delete";d.textContent="削除";d.onclick=()=>deletePosition(p);row.appendChild(d);
+  box.appendChild(row)
+ })
+}
+$("addPosition").onclick=()=>openNewPosition();
+function openNewPosition(){editingPosition=null;$("nameTitle").textContent="ポジションを追加";$("positionName").value="";show("nameDialog");setTimeout(()=>$("positionName").focus(),50)}
+function openRename(old){editingPosition=old;$("nameTitle").textContent="ポジション名を変更";$("positionName").value=old;show("nameDialog");setTimeout(()=>$("positionName").select(),50)}
+$("cancelName").onclick=()=>hide("nameDialog");
+$("saveName").onclick=()=>{
+ let n=$("positionName").value.trim();if(!n)return;
+ if(state.positions.includes(n)&&n!==editingPosition){alert("同じ名前のポジションがすでにあります。");return}
+ if(editingPosition===null){state.positions.push(n);state.phrases[n]=[];state.selected=n}
+ else{let i=state.positions.indexOf(editingPosition);state.positions[i]=n;state.phrases[n]=state.phrases[editingPosition]||[];if(n!==editingPosition)delete state.phrases[editingPosition];if(state.selected===editingPosition)state.selected=n}
+ save();hide("nameDialog");render();renderPositionManager();status.textContent="ポジションを保存しました。"
+};
+function movePosition(index,direction){
+  const target=index+direction;
+  if(target<0||target>=state.positions.length)return;
+  const temp=state.positions[index];
+  state.positions[index]=state.positions[target];
+  state.positions[target]=temp;
+  save();render();renderPositionManager();
+  status.textContent="ポジションの順番を変更しました。";
+}
+
+function deletePosition(p){
+ if(state.positions.length<=1){alert("ポジションは1つ以上必要です。");return}
+ if(!confirm("「"+p+"」を削除しますか？\\nこのポジションのフレーズも削除されます。"))return;
+ let i=state.positions.indexOf(p);state.positions.splice(i,1);delete state.phrases[p];
+ if(state.selected===p)state.selected=state.positions[Math.max(0,i-1)];
+ save();render();renderPositionManager();status.textContent="ポジションを削除しました。"
+}
+
+let speaking=false;
+function setStopButtons(show){
+  document.querySelectorAll(".stop").forEach(b=>b.classList.toggle("show",show));
+}
+function stopSpeaking(){
+  if("speechSynthesis" in window)speechSynthesis.cancel();
+  speaking=false;
+  setStopButtons(false);
+  status.textContent="音声を停止しました。";
+}
+let activeStopButton=null;
+function setActiveStopButton(btn){
+  document.querySelectorAll(".stop.show").forEach(b=>b.classList.remove("show"));
+  activeStopButton=btn||null;
+  if(activeStopButton)activeStopButton.classList.add("show");
+}
+function stopSpeaking(){
+  if("speechSynthesis" in window)speechSynthesis.cancel();
+  setActiveStopButton(null);
+  status.textContent="音声を停止しました。";
+}
+
+let liveTranslationTimer=null;
+let liveTranslationRequestId=0;
+
+function addCustomPhraseToCurrentPosition(){
+ const v=$("custom").value.trim();
+ if(!v)return;
+ list().push(v);
+ save();
+ render();
+ status.textContent="フレーズを追加しました。";
+}
+
+async function showTranslationPreview(text){
+  const requestId=++liveTranslationRequestId;
+
+  if(!text || !text.trim()){
+    status.innerHTML="";
+    return;
+  }
+
+  status.textContent="翻訳しています…";
+
+  try{
+    const targetLang=$("lang").value;
+
+    const forwardUrl="https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl="+encodeURIComponent(targetLang)+"&dt=t&q="+encodeURIComponent(text);
+    const forwardRes=await fetch(forwardUrl);
+    const forwardData=await forwardRes.json();
+    const translated=forwardData[0].map(x=>x[0]).join("");
+
+    let backTranslated=text;
+    if(targetLang!=="ja"){
+      const backUrl="https://translate.googleapis.com/translate_a/single?client=gtx&sl="+encodeURIComponent(targetLang)+"&tl=ja&dt=t&q="+encodeURIComponent(translated);
+      const backRes=await fetch(backUrl);
+      const backData=await backRes.json();
+      backTranslated=backData[0].map(x=>x[0]).join("");
+    }
+
+    if(requestId!==liveTranslationRequestId)return;
+
+    status.innerHTML="";
+
+    const translatedLine=document.createElement("div");
+    translatedLine.textContent=translated;
+    translatedLine.style.fontWeight="700";
+    translatedLine.style.fontSize="18px";
+    status.appendChild(translatedLine);
+
+    const backLine=document.createElement("div");
+    backLine.textContent="逆翻訳： "+backTranslated;
+    backLine.style.marginTop="6px";
+    backLine.style.fontSize="14px";
+    backLine.style.color="#666";
+    status.appendChild(backLine);
+  }catch(e){
+    if(requestId!==liveTranslationRequestId)return;
+    status.textContent="翻訳に失敗しました。インターネット接続を確認してください。";
+  }
+}
+
+function scheduleLiveTranslation(){
+  clearTimeout(liveTranslationTimer);
+  const text=$("custom").value;
+  liveTranslationTimer=setTimeout(function(){
+    showTranslationPreview(text);
+  },350);
+}
+
+async function translateAndSpeak(text,stopButton){
+ status.textContent="翻訳しています…";
+ try{
+  if("speechSynthesis" in window)speechSynthesis.cancel();
+  if(typeof setActiveStopButton==="function")setActiveStopButton(null);
+
+  const targetLang=$("lang").value;
+
+  const forwardUrl="https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl="+encodeURIComponent(targetLang)+"&dt=t&q="+encodeURIComponent(text);
+  const forwardRes=await fetch(forwardUrl);
+  const forwardData=await forwardRes.json();
+  const translated=forwardData[0].map(x=>x[0]).join("");
+
+  let backTranslated=text;
+  if(targetLang!=="ja"){
+    const backUrl="https://translate.googleapis.com/translate_a/single?client=gtx&sl="+encodeURIComponent(targetLang)+"&tl=ja&dt=t&q="+encodeURIComponent(translated);
+    const backRes=await fetch(backUrl);
+    const backData=await backRes.json();
+    backTranslated=backData[0].map(x=>x[0]).join("");
+  }
+
+  status.innerHTML="";
+  const translatedLine=document.createElement("div");
+  translatedLine.textContent=translated;
+  translatedLine.style.fontWeight="700";
+  translatedLine.style.fontSize="18px";
+  status.appendChild(translatedLine);
+
+  const backLine=document.createElement("div");
+  backLine.textContent="逆翻訳： "+backTranslated;
+  backLine.style.marginTop="6px";
+  backLine.style.fontSize="14px";
+  backLine.style.color="#666";
+  status.appendChild(backLine);
+
+  speak(translated,targetLang,stopButton);
+ }catch(e){
+  status.textContent="翻訳に失敗しました。インターネット接続を確認してください。";
+ }
+}
+function speak(text,language,stopButton){
+ if(!("speechSynthesis" in window)){
+  status.textContent="この端末では音声読み上げに対応していません。";
+  return;
+ }
+ speechSynthesis.cancel();
+ let u=new SpeechSynthesisUtterance(text);
+ u.lang=language;
+ u.rate=.9;
+ let v=speechSynthesis.getVoices().find(x=>x.lang.toLowerCase().startsWith(language.toLowerCase()));
+ if(v)u.voice=v;
+ u.onstart=()=>setActiveStopButton(stopButton);
+ u.onend=()=>setActiveStopButton(null);
+ u.onerror=()=>setActiveStopButton(null);
+ speechSynthesis.speak(u);
+}
+
+$("customSpeak").onclick=()=>{let t=$("custom").value.trim();if(t)translateAndSpeak(t,null)}
+
+const DEFAULT_CUSTOMER_CONFIG={
+ languages:[
+  ["en","English","英語"],["zh-CN","简体中文","中国語（簡体）"],["zh-TW","繁體中文","中国語（繁体）"],
+  ["ko","한국어","韓国語"],["th","ไทย","タイ語"],["vi","Tiếng Việt","ベトナム語"],
+  ["id","Bahasa Indonesia","インドネシア語"],["es","Español","スペイン語"],["fr","Français","フランス語"],
+  ["de","Deutsch","ドイツ語"],["pt","Português","ポルトガル語"],["ru","Русский","ロシア語"],
+  ["it","Italiano","イタリア語"],["ar","العربية","アラビア語"],["hi","हिन्दी","ヒンディー語"],
+  ["ms","Bahasa Melayu","マレー語"],["tl","Filipino","フィリピン語"]
+ ],
+ purposes:[
+  {ja:"事前に予約している",action:"reserved"},
+  {ja:"当日券の購入",action:"sameDay"},
+  {ja:"その他",action:"other"}
+ ],
+ games:[
+  "Asakusa Puzzle Adventure",
+  "Escape from The RED ROOM",
+  "Escape from the Puzzle Room",
+  "A Challenge from the Crafting Genius",
+  "A Ninja Mission: Escape from the House of Tricks"
+ ]
+};
+let customerConfig;
+try{customerConfig=JSON.parse(localStorage.getItem("customerBoardConfig_v2")||"null")}catch(e){customerConfig=null}
+if(!customerConfig)customerConfig=JSON.parse(JSON.stringify(DEFAULT_CUSTOMER_CONFIG));
+if(!Array.isArray(customerConfig.languages))customerConfig.languages=JSON.parse(JSON.stringify(DEFAULT_CUSTOMER_CONFIG.languages));
+if(!Array.isArray(customerConfig.purposes))customerConfig.purposes=JSON.parse(JSON.stringify(DEFAULT_CUSTOMER_CONFIG.purposes));
+if(!Array.isArray(customerConfig.games))customerConfig.games=JSON.parse(JSON.stringify(DEFAULT_CUSTOMER_CONFIG.games));
+function saveCustomerConfig(){localStorage.setItem("customerBoardConfig_v2",JSON.stringify(customerConfig))}
+let customerLangs=customerConfig.languages;
+let customerGames=customerConfig.games;
+
+let customerState={lang:null,step:"languageType",game:null};
+
+const enText={
+ choosePurpose:"What brings you here today?",
+ reserved:"I have a reservation",
+ sameDay:"I want to buy a same-day ticket",
+ otherPurpose:"Other",
+ showTicket:"Please show the ticket screen to a staff member.",
+ chooseGame:"Which game would you like to join?",
+ selectedGame:"Please show this screen to a staff member.",
+ otherHelp:"Please show this screen to a staff member and tell us what you need."
+};
+const jaText={
+ choosePurpose:"本日のご用件を選んでください。",
+ reserved:"事前に予約している",
+ sameDay:"当日券の購入",
+ otherPurpose:"その他",
+ showTicket:"スタッフにチケットの画面を見せてください。",
+ chooseGame:"参加したいゲームを選んでください。",
+ selectedGame:"この画面をスタッフに見せてください。",
+ otherHelp:"この画面をスタッフに見せて、ご用件をお伝えください。"
+};
+
+async function cTranslate(text,target){
+ if(target==="en")return text;
+ try{
+  const url="https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl="+encodeURIComponent(target)+"&dt=t&q="+encodeURIComponent(text);
+  const r=await fetch(url);const d=await r.json();
+  return d[0].map(x=>x[0]).join("");
+ }catch(e){return text}
+}
+async function ct(key){return customerState.lang==="en"?enText[key]:await cTranslate(enText[key],customerState.lang)}
+
+function makeChoice(main,sub,fn){
+ const b=document.createElement("button");
+ const m=document.createElement("span");m.className="choice-main";m.textContent=main;b.appendChild(m);
+ const sj=document.createElement("span");sj.className="choice-sub";sj.textContent=sub;b.appendChild(sj);
+ b.onclick=fn;return b;
+}
+function backCustomer(){
+ if(customerState.step==="languageList")customerState.step="languageType";
+ else if(customerState.step==="purpose")customerState.step=customerState.lang==="en"?"languageType":"languageList";
+ else if(["ticket","games","other"].includes(customerState.step))customerState.step="purpose";
+ else if(customerState.step==="gameConfirm")customerState.step="games";
+ renderCustomer();
+}
+async function renderCustomer(){
+ const box=document.getElementById("customerStep");box.innerHTML="";
+ const card=document.createElement("div");card.className="customer-card";box.appendChild(card);
+
+ if(customerState.step==="languageType"){
+  let h=document.createElement("div");h.className="customer-title";h.textContent="Which language do you speak?";card.appendChild(h);
+  let ja=document.createElement("div");ja.className="customer-ja";ja.textContent="話せる言語は英語ですか？それ以外ですか？";card.appendChild(ja);
+  let g=document.createElement("div");g.className="choice-grid";
+  g.appendChild(makeChoice("English","英語",()=>{customerState.lang="en";customerState.step="purpose";renderCustomer()}));
+  g.appendChild(makeChoice("A language other than English","英語以外",()=>{customerState.step="languageList";renderCustomer()}));
+  card.appendChild(g);return;
+ }
+
+ if(customerState.step==="languageList"){
+  let h=document.createElement("div");h.className="customer-title";h.textContent="Please select your language.";card.appendChild(h);
+  let ja=document.createElement("div");ja.className="customer-ja";ja.textContent="話せる言語を選んでください。";card.appendChild(ja);
+  let g=document.createElement("div");g.className="customer-language-list";
+  customerLangs.filter(x=>x[0]!=="en").forEach(([code,native,jp])=>{
+   g.appendChild(makeChoice(native,jp,()=>{customerState.lang=code;customerState.step="purpose";renderCustomer()}));
+  });
+  card.appendChild(g);
+ }
+
+ if(customerState.step==="purpose"){
+  let h=document.createElement("div");h.className="customer-title";h.textContent=await ct("choosePurpose");card.appendChild(h);
+  let ja=document.createElement("div");ja.className="customer-ja";ja.textContent=jaText.choosePurpose;card.appendChild(ja);
+  let g=document.createElement("div");g.className="choice-grid";
+  for(const purpose of customerConfig.purposes){
+   const translated=await customerTranslateJa(purpose.ja,customerState.lang);
+   g.appendChild(makeChoice(translated,purpose.ja,()=>{
+    customerState.step=purpose.action==="reserved"?"ticket":purpose.action==="sameDay"?"games":"other";
+    renderCustomer();
+   }));
+  }
+  card.appendChild(g);
+ }
+
+ if(customerState.step==="ticket"){
+  let h=document.createElement("div");h.className="customer-confirm";h.textContent=await ct("showTicket");card.appendChild(h);
+  let ja=document.createElement("div");ja.className="customer-ja";ja.textContent=jaText.showTicket;card.appendChild(ja);
+ }
+
+ if(customerState.step==="games"){
+  let h=document.createElement("div");h.className="customer-title";h.textContent=await ct("chooseGame");card.appendChild(h);
+  let ja=document.createElement("div");ja.className="customer-ja";ja.textContent=jaText.chooseGame;card.appendChild(ja);
+  let g=document.createElement("div");g.className="game-grid";
+  customerGames.forEach(game=>{
+   let b=document.createElement("button");b.textContent=game;
+   b.onclick=()=>{customerState.game=game;customerState.step="gameConfirm";renderCustomer()};
+   g.appendChild(b);
+  });
+  card.appendChild(g);
+ }
+
+ if(customerState.step==="gameConfirm"){
+  let game=document.createElement("div");game.className="customer-title";game.textContent=customerState.game;card.appendChild(game);
+  let h=document.createElement("div");h.className="customer-confirm";h.textContent=await ct("selectedGame");card.appendChild(h);
+  let ja=document.createElement("div");ja.className="customer-ja";ja.textContent=jaText.selectedGame;card.appendChild(ja);
+ }
+
+ if(customerState.step==="other"){
+  let h=document.createElement("div");h.className="customer-confirm";h.textContent=await ct("otherHelp");card.appendChild(h);
+  let ja=document.createElement("div");ja.className="customer-ja";ja.textContent=jaText.otherHelp;card.appendChild(ja);
+ }
+
+ if(customerState.step!=="languageType"){
+  let back=document.createElement("button");back.className="customer-back";back.textContent="← Back / 戻る";back.onclick=backCustomer;card.appendChild(back);
+ }
+}
+
+
+
+async function customerTranslateJa(text,target){
+ if(target==="ja")return text;
+ try{
+  const url="https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl="+encodeURIComponent(target)+"&dt=t&q="+encodeURIComponent(text);
+  const r=await fetch(url);const d=await r.json();return d[0].map(x=>x[0]).join("");
+ }catch(e){return text}
+}
+function syncCustomerRefs(){customerLangs=customerConfig.languages;customerGames=customerConfig.games;saveCustomerConfig()}
+
+let currentCustomerSettingsType=null;
+
+function moveSetting(type,index,dir){
+ const arr=type==="language"?customerConfig.languages:type==="purpose"?customerConfig.purposes:customerConfig.games;
+ const to=index+dir;if(to<0||to>=arr.length)return;
+ [arr[index],arr[to]]=[arr[to],arr[index]];
+ syncCustomerRefs();
+ openCustomerSubSettings(type);
+}
+
+function settingsRow(label,type,index){
+ const row=document.createElement("div");row.className="settings-row";
+ const box=document.createElement("div");box.className="labelbox";box.textContent=label;row.appendChild(box);
+
+ const up=document.createElement("button");up.className="mini";up.textContent="↑";
+ up.disabled=index===0;up.onclick=()=>moveSetting(type,index,-1);row.appendChild(up);
+
+ const arr=type==="language"?customerConfig.languages:type==="purpose"?customerConfig.purposes:customerConfig.games;
+ const down=document.createElement("button");down.className="mini";down.textContent="↓";
+ down.disabled=index===arr.length-1;down.onclick=()=>moveSetting(type,index,1);row.appendChild(down);
+
+ const change=document.createElement("button");change.textContent="変更";
+ change.onclick=()=>changeSetting(type,index);row.appendChild(change);
+
+ const del=document.createElement("button");del.className="delete";del.textContent="削除";
+ del.onclick=()=>deleteSetting(type,index);row.appendChild(del);
+
+ return row;
+}
+
+function openCustomerSubSettings(type){
+ currentCustomerSettingsType=type;
+ const dialog=document.getElementById("customerSubSettingsDialog");
+ const title=document.getElementById("customerSubSettingsTitle");
+ const body=document.getElementById("customerSubSettingsBody");
+ body.innerHTML="";
+
+ if(type==="language"){
+  title.textContent="言語の選択肢";
+  const list=document.createElement("div");
+  customerConfig.languages.forEach((x,i)=>list.appendChild(settingsRow(x[1]+" / "+x[2]+" ("+x[0]+")","language",i)));
+  body.appendChild(list);
+
+  const add=document.createElement("button");
+  add.className="primary";add.style.width="100%";add.style.marginTop="12px";
+  add.textContent="＋ 言語を追加";
+  add.onclick=addLanguageSetting;
+  body.appendChild(add);
+ }
+
+ if(type==="purpose"){
+  title.textContent="用件の選択肢";
+  const list=document.createElement("div");
+  customerConfig.purposes.forEach((x,i)=>{
+   const actionName=x.action==="reserved"?"予約案内":x.action==="sameDay"?"ゲーム選択":"その他";
+   list.appendChild(settingsRow(x.ja+" ["+actionName+"]","purpose",i));
+  });
+  body.appendChild(list);
+
+  const add=document.createElement("button");
+  add.className="primary";add.style.width="100%";add.style.marginTop="12px";
+  add.textContent="＋ 用件を追加";
+  add.onclick=addPurposeSetting;
+  body.appendChild(add);
+ }
+
+ if(type==="game"){
+  title.textContent="ゲームの選択肢";
+  const list=document.createElement("div");
+  customerConfig.games.forEach((x,i)=>list.appendChild(settingsRow(x,"game",i)));
+  body.appendChild(list);
+
+  const add=document.createElement("button");
+  add.className="primary";add.style.width="100%";add.style.marginTop="12px";
+  add.textContent="＋ ゲームを追加";
+  add.onclick=addGameSetting;
+  body.appendChild(add);
+ }
+
+ document.getElementById("customerSettingsDialog").classList.remove("show");
+ dialog.classList.add("show");
+ dialog.querySelector(".panel").scrollTop=0;
+}
+
+function deleteSetting(type,index){
+ if(!confirm("この選択肢を削除しますか？"))return;
+ const arr=type==="language"?customerConfig.languages:type==="purpose"?customerConfig.purposes:customerConfig.games;
+ arr.splice(index,1);
+ syncCustomerRefs();
+ openCustomerSubSettings(type);
+}
+
+function changeSetting(type,index){
+ if(type==="language"){
+  const x=customerConfig.languages[index];
+  const code=prompt("言語コード",x[0]);if(code===null)return;
+  const native=prompt("お客さまに表示する言語名",x[1]);if(native===null)return;
+  const jp=prompt("日本語での言語名",x[2]);if(jp===null)return;
+  customerConfig.languages[index]=[code.trim(),native.trim(),jp.trim()];
+ }else if(type==="purpose"){
+  const x=customerConfig.purposes[index];
+  const ja=prompt("用件の日本語",x.ja);if(ja===null)return;
+  const action=prompt("動作を入力: reserved=予約案内 / sameDay=ゲーム選択 / other=その他",x.action);if(action===null)return;
+  customerConfig.purposes[index]={ja:ja.trim(),action:["reserved","sameDay","other"].includes(action)?action:"other"};
+ }else{
+  const name=prompt("ゲーム名",customerConfig.games[index]);if(name===null)return;
+  customerConfig.games[index]=name.trim();
+ }
+ syncCustomerRefs();
+ openCustomerSubSettings(type);
+}
+
+function addLanguageSetting(){
+ const code=prompt("言語コード（例: en）");if(!code)return;
+ const native=prompt("お客さまに表示する言語名（例: English）");if(!native)return;
+ const jp=prompt("日本語での言語名（例: 英語）");if(!jp)return;
+ customerConfig.languages.push([code.trim(),native.trim(),jp.trim()]);
+ syncCustomerRefs();openCustomerSubSettings("language");
+}
+
+function addPurposeSetting(){
+ const ja=prompt("追加する用件を日本語で入力してください");if(!ja)return;
+ const action=prompt("動作を入力: reserved=予約案内 / sameDay=ゲーム選択 / other=その他","other");if(action===null)return;
+ customerConfig.purposes.push({ja:ja.trim(),action:["reserved","sameDay","other"].includes(action)?action:"other"});
+ syncCustomerRefs();openCustomerSubSettings("purpose");
+}
+
+function addGameSetting(){
+ const name=prompt("追加するゲーム名を英語で入力してください");if(!name)return;
+ customerConfig.games.push(name.trim());
+ syncCustomerRefs();openCustomerSubSettings("game");
+}
+
+document.getElementById("openCustomerSettings").onclick=()=>{
+ document.getElementById("customerSettingsDialog").classList.add("show");
+};
+document.getElementById("closeCustomerSettings").onclick=()=>{
+ document.getElementById("customerSettingsDialog").classList.remove("show");
+};
+document.getElementById("openLanguageSettings").onclick=()=>openCustomerSubSettings("language");
+document.getElementById("openPurposeSettings").onclick=()=>openCustomerSubSettings("purpose");
+document.getElementById("openGameSettings").onclick=()=>openCustomerSubSettings("game");
+
+document.getElementById("backCustomerSettings").onclick=()=>{
+ document.getElementById("customerSubSettingsDialog").classList.remove("show");
+ document.getElementById("customerSettingsDialog").classList.add("show");
+};
+document.getElementById("closeCustomerSubSettings").onclick=()=>{
+ document.getElementById("customerSubSettingsDialog").classList.remove("show");
+};
+
+
+
+
+$("addCustomPhrase").addEventListener("click",addCustomPhraseToCurrentPosition);
+$("custom").addEventListener("input",scheduleLiveTranslation);
+$("lang").addEventListener("change",function(){
+  const text=$("custom").value.trim();
+  if(text)showTranslationPreview(text);
+});
+
+
+if($("phraseEditInput"))$("phraseEditInput").addEventListener("input",schedulePhraseEditPreview);
+
+if($("cancelPhraseEdit"))$("cancelPhraseEdit").addEventListener("click",closePhraseEdit);
+
+if($("savePhraseEdit"))$("savePhraseEdit").addEventListener("click",()=>{
+  if(editingPhraseIndex===null)return;
+  const v=$("phraseEditInput").value.trim();
+  if(!v)return;
+  const arr=list();
+  if(editingPhraseIndex<0 || editingPhraseIndex>=arr.length)return;
+  arr[editingPhraseIndex]=v;
+  save();
+  render();
+  closePhraseEdit();
+  status.textContent="フレーズを変更しました。";
+});
+
+$("lang").addEventListener("change",()=>{
+  const dlg=$("phraseEditDialog");
+  if(dlg && dlg.classList.contains("show")){
+    schedulePhraseEditPreview();
+  }
+});
+
+
+
+
+
+
+
+
+let customerSpeechRecognition=null;
+let translationModeActive=false, translationShouldRestart=false;
+let translationHistory=[], translationSessionId=0;
+
+function speechLangForSelectedOption(code){
+ const map={"en":"en-US","ja":"ja-JP","zh-CN":"zh-CN","zh-TW":"zh-TW","ko":"ko-KR","th":"th-TH","vi":"vi-VN","id":"id-ID","es":"es-ES","fr":"fr-FR","de":"de-DE","pt":"pt-PT","ru":"ru-RU","it":"it-IT","ar":"ar-SA","hi":"hi-IN","ms":"ms-MY","tl":"fil-PH","tr":"tr-TR","nl":"nl-NL","pl":"pl-PL","uk":"uk-UA"};
+ return map[code]||code;
+}
+function setLatestTranslation(ja,original){
+ $("translationStickyHeader").style.display="block";
+ $("translationStickyJapanese").textContent=ja||"";
+ if(ja && !["聞き取り中です…","翻訳しています…"].includes(ja)){
+  translationHistory.unshift({ja:ja,original:original||""});
+ }
+}
+function renderTranslationHistory(){
+ const el=$("translationHistoryList");
+ if(!translationHistory.length){el.innerHTML='<div class="note">まだ翻訳履歴はありません。</div>';return;}
+ el.innerHTML=translationHistory.map(x=>'<div class="translation-history-item"><div class="translation-history-ja">'+esc(x.ja)+'</div>'+(x.original?'<div class="translation-history-original">'+esc(x.original)+'</div>':'')+'</div>').join("");
+}
+function resetTranslationResults(){
+ translationHistory=[];
+ $("translationStickyJapanese").textContent="";
+ $("translationStickyHeader").style.display="none";
+ renderTranslationHistory();
+}
+async function translateCustomerSpeechToJapanese(text,sourceLang,sid){
+ if(!translationModeActive||sid!==translationSessionId)return;
+ $("translationStickyHeader").style.display="block"; $("translationStickyJapanese").textContent="翻訳しています…";
+ try{
+  let ja=text;
+  if(sourceLang!=="ja"){
+   const url="https://translate.googleapis.com/translate_a/single?client=gtx&sl="+encodeURIComponent(sourceLang)+"&tl=ja&dt=t&q="+encodeURIComponent(text);
+   const r=await fetch(url),d=await r.json(); ja=d[0].map(x=>x[0]).join("");
+  }
+  if(translationModeActive&&sid===translationSessionId)setLatestTranslation(ja||"翻訳できませんでした。",text);
+ }catch(e){if(translationModeActive&&sid===translationSessionId)setLatestTranslation("翻訳に失敗しました。インターネット接続を確認してください。",text);}
+}
+function updateTranslationButtons(){
+ $("translationModeBtn").textContent=translationModeActive?"停止":"翻訳モード";
+ $("translationResetBtn").style.display=translationModeActive?"block":"none";
+}
+function startRecognitionCycle(){
+ if(!translationModeActive)return;
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){setLatestTranslation("このブラウザでは音声認識を利用できません。","");stopTranslationMode();return;}
+ const lang=$("lang").value,sid=translationSessionId,r=new SR(); customerSpeechRecognition=r;
+ r.lang=speechLangForSelectedOption(lang); r.continuous=true; r.interimResults=true; r.maxAlternatives=1;
+ r.onstart=()=>{if(sid!==translationSessionId)return;translationShouldRestart=true;$("translationStickyHeader").style.display="block";if(!translationHistory.length)$("translationStickyJapanese").textContent="聞き取り中です…";};
+ r.onresult=e=>{if(!translationModeActive||sid!==translationSessionId)return;let text="";for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)text+=e.results[i][0].transcript;text=text.trim();if(text)translateCustomerSpeechToJapanese(text,lang,sid);};
+ r.onerror=e=>{if(!translationModeActive||sid!==translationSessionId)return;if(e.error==="not-allowed"||e.error==="service-not-allowed"){setLatestTranslation("マイクが許可されていません。ChromeまたはPWAのマイク権限を確認してください。","");translationShouldRestart=false;stopTranslationMode();}else if(e.error==="network")setLatestTranslation("音声認識の通信に失敗しました。インターネット接続を確認してください。","");};
+ r.onend=()=>{if(customerSpeechRecognition===r)customerSpeechRecognition=null;if(translationModeActive&&translationShouldRestart&&sid===translationSessionId)setTimeout(()=>{if(translationModeActive&&!customerSpeechRecognition&&sid===translationSessionId)startRecognitionCycle();},250);};
+ try{r.start()}catch(e){customerSpeechRecognition=null;if(translationModeActive)setTimeout(startRecognitionCycle,500);}
+}
+function startTranslationMode(){if(translationModeActive)return;translationModeActive=true;translationShouldRestart=true;translationSessionId++;updateTranslationButtons();$("translationStickyHeader").style.display="block";if(!translationHistory.length)$("translationStickyJapanese").textContent="聞き取り中です…";startRecognitionCycle();}
+function stopTranslationMode(){translationModeActive=false;translationShouldRestart=false;translationSessionId++;try{if(customerSpeechRecognition)customerSpeechRecognition.abort()}catch(e){}customerSpeechRecognition=null;updateTranslationButtons();}
+function toggleTranslationMode(){translationModeActive?stopTranslationMode():startTranslationMode();}
+function showStaffScreen(){
+ const staff=$("staffView"),customer=$("customerView");
+ if(staff)staff.style.display="block";
+ if(customer)customer.style.display="none";
+ const header=$("translationStickyHeader");
+ if(header)header.style.display=(translationModeActive||translationHistory.length)?"block":"none";
+}
+function showCustomerScreen(){
+ if(translationModeActive)stopTranslationMode();
+ const staff=$("staffView"),customer=$("customerView");
+ if(staff)staff.style.display="none";
+ if(customer)customer.style.display="block";
+ const header=$("translationStickyHeader");
+ if(header)header.style.display="none";
+ customerState={lang:null,step:"languageType",game:null};
+ renderCustomer();
+}
+function toggleScreen(){
+ const staff=$("staffView");
+ const isStaffVisible=staff && getComputedStyle(staff).display!=="none";
+ if(isStaffVisible)showCustomerScreen();
+ else showStaffScreen();
+}
+$("translationModeBtn").addEventListener("click",toggleTranslationMode);
+$("translationResetBtn").addEventListener("click",resetTranslationResults);
+$("translationStickyHeader").addEventListener("click",()=>{renderTranslationHistory();$("translationHistoryDialog").classList.add("show")});
+$("closeTranslationHistory").addEventListener("click",()=>$("translationHistoryDialog").classList.remove("show"));
+$("viewToggleGlobe").addEventListener("click",toggleScreen);
+$("customerViewToggleGlobe").addEventListener("click",toggleScreen);
+showStaffScreen();
+
+
+
+render();
+</script>
+</body>
+</html>
